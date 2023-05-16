@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS artists (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS imagesets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  theme VARCHAR(255) NOT NULL,
+  artist INT NOT NULL,
+  singularImages TEXT NOT NULL,
+  neutralImages TEXT NOT NULL,
+  questions TEXT NOT NULL,
+  FOREIGN KEY(artist) REFERENCES artists(id)
+);
