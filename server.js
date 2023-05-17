@@ -12,7 +12,7 @@ const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'captchat'
+    database: 'capchat'
 });
 
 db.connect((err) => {
@@ -58,6 +58,7 @@ app.post('/imageset', multer().single('images'), (req, res) => {
 
 // Serve the login HTML page
 app.get('/login', (req, res) => {
+    console.log(__dirname)
     res.sendFile(__dirname + '/login.html');
 });
 
