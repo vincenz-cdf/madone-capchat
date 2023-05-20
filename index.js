@@ -1,71 +1,68 @@
 const express = require('express');
-const multer = require('multer');
-const unzipper = require('unzipper');
 const mysql = require('mysql');
 const cors = require('cors');
+const path = require('path');
+const bodyParser = require('body-parser');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(bodyParser.json());
 
-const db = mysql.createConnection({
+const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'password',
     database: 'capchat'
 });
 
-db.connect((err) => {
-    if (err) throw err;
-    console.log('MySQL Connected...');
+connection.connect(function (err) {
+    if (err) {
+        console.error('error connecting: ' + err.stack);
+        return;
+    }
+    console.log('connected as id ' + connection.threadId);
 });
 
-app.post('/register', (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+app.get('/', (req, res) => {
+    const sqlFalse = 'SELECT * FROM image WHERE singular = false ORDER BY RAND() LIMIT 7';
 
-    db.query("INSERT INTO artists (username, password) VALUES (?, ?)", [username, password], (error) => {
-        if (error) {
-            console.log(error)
-          return res.status(500).send('Erreur inscription');
-        }
-        res.redirect('/login');
-      });
-});
+    const sqlTrue = 'SELECT * FROM image WHERE singular = true ORDER BY RAND() LIMIT 1';
 
-app.post('/login', (req, res) => {
-    let sql = 'SELECT * FROM artists WHERE username = ? AND password = ?';
-    let query = db.query(sql, [req.body.username, req.body.password], (err, results) => {
+    connection.query(sqlFalse, function (err, resultsFalse) {
         if (err) throw err;
-        if (results.length === 0) return res.status(400).send({ error: 'Invalid username or password' });
-        res.send({ token: results[0].id });
+
+        connection.query(sqlTrue, function (err, resultsTrue) {
+            if (err) throw err;
+
+            let combinedResults = resultsFalse.concat(resultsTrue);
+            combinedResults.sort(() => Math.random() - 0.5);
+
+            res.render('capchat/capchat', { hint: resultsTrue[0].hint, images: combinedResults });
+        });
     });
 });
 
-app.post('/imageset', multer().single('images'), (req, res) => {
-    const dir = `images/${req.body.name}`;
-    unzipper.Open.buffer(req.file.buffer)
-        .then(d => d.extract({ path: dir }))
-        .then(() => {
-            let imageSet = { ...req.body, artist: req.headers.token };
-            let sql = 'INSERT INTO imagesets SET ?';
-            let query = db.query(sql, imageSet, (err, result) => {
-                if (err) throw err;
-                res.send({ message: 'Image set uploaded successfully' });
-            });
-        });
+app.post('/check', (req, res) => {
+    // SQL Query to check whether the image with the given ID is singular
+    const sqlCheck = 'SELECT singular FROM image WHERE id = ?';
+
+    connection.query(sqlCheck, [req.body.id], function (err, results) {
+        if (err) throw err;
+
+        // If singular is true, send 'Yes', else send 'No'
+        if (results[0].singular) {
+            res.send('Yes');
+        } else {
+            res.send('No');
+        }
+    });
 });
 
-// Serve the login HTML page
-app.get('/login', (req, res) => {
-    console.log(__dirname)
-    res.sendFile(__dirname + '/public/login.html');
-});
-
-// Serve the register HTML page
-app.get('/register', (req, res) => {
-    res.sendFile(__dirname + '/register.html');
-});
+app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap/dist/'));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
 
 app.listen(3000, () => console.log('Server started'));

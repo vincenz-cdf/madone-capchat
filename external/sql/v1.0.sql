@@ -48,9 +48,9 @@ INSERT INTO image (image_sets_id, singular, path) VALUES (1, FALSE, '/resources/
 INSERT INTO image (image_sets_id, singular, path) VALUES (1, FALSE, '/resources/neutres/chat_neutre_13.jpg');
 
 INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_amoureux.jpg', 'Saurez vous reconnaître un chat amoureux ?');
-INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_bien_coiffé.jpg', 'Mon chat est une fausse blonde');
+INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_bien_coiffe.jpg', 'Mon chat est une fausse blonde');
 INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_borgne.jpg', 'Ce chat là a fait une croix sur son oeil');
-INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_chapeauté.jpg', 'C''est encore le chat qui porte le chapeau');
+INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_chapeaute.jpg', 'C''est encore le chat qui porte le chapeau');
 INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_cosmonaute.jpg', 'Saurez-vous reconnaître le chat de Thomas Pesquet ?');
 INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_cyclope.jpg', 'Saurez-vous reconnaître le chat CYPLOPE ?');
 INSERT INTO image (image_sets_id, singular, path, hint) VALUES (1, TRUE, '/resources/singuliers/chat_licorne.jpg', 'Ne confondons pas une salicorne et un chat-licorne !');

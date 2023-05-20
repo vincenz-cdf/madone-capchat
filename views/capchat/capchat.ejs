@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+  <script src="/bootstrap/js/bootstrap.min.js"></script>
+  <script src="/views/capchat/capchat.js"></script>
+
+  <style>
+    .bd-placeholder-img {
+      font-size: 1.125rem;
+      text-anchor: middle;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+    }
+
+    @media (min-width: 768px) {
+      .bd-placeholder-img-lg {
+        font-size: 3.5rem;
+      }
+    }
+
+    .b-example-divider {
+      width: 100%;
+      height: 3rem;
+      background-color: rgba(0, 0, 0, .1);
+      border: solid rgba(0, 0, 0, .15);
+      border-width: 1px 0;
+      box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+    }
+
+    .b-example-vr {
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 100vh;
+    }
+
+    .bi {
+      vertical-align: -.125em;
+      fill: currentColor;
+    }
+
+    .nav-scroller {
+      position: relative;
+      z-index: 2;
+      height: 2.75rem;
+      overflow-y: hidden;
+    }
+
+    .nav-scroller .nav {
+      display: flex;
+      flex-wrap: nowrap;
+      padding-bottom: 1rem;
+      margin-top: -1px;
+      overflow-x: auto;
+      text-align: center;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .btn-bd-primary {
+      --bd-violet-bg: #712cf9;
+      --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+      --bs-btn-font-weight: 600;
+      --bs-btn-color: var(--bs-white);
+      --bs-btn-bg: var(--bd-violet-bg);
+      --bs-btn-border-color: var(--bd-violet-bg);
+      --bs-btn-hover-color: var(--bs-white);
+      --bs-btn-hover-bg: #6528e0;
+      --bs-btn-hover-border-color: #6528e0;
+      --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+      --bs-btn-active-color: var(--bs-btn-hover-color);
+      --bs-btn-active-bg: #5a23c8;
+      --bs-btn-active-border-color: #5a23c8;
+    }
+
+    .bd-mode-toggle {
+      z-index: 1500;
+    }
+
+    .selected {
+      border: 2px solid blue;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.1);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="b-example-divider"></div>
+  <div class="modal modal-sheet position-static d-block bg-body-secondary p-4 py-md-5" tabindex="-1" role="dialog"
+    id="modalTour">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content rounded-4 shadow">
+        <div class="modal-body p-5">
+          <h4 class="fw-bold mb-0">
+            <%= hint %>
+          </h4>
+          <div id="imageContainer" style="display: flex; flex-wrap: wrap;">
+            <% images.forEach(function(image, index) { %>
+              <div style="flex: 1 1 25%; padding: 10px;">
+                <img src="<%= image.path %>" alt="Image ID <%= image.id %>" style="width: 100%; height: auto;"
+                  data-id="<%= image.id %>">
+              </div>
+              <% }); %>
+          </div>
+          <button type="button" id="confirmButton" class="btn btn-lg btn-primary mt-5 w-100"
+            data-bs-dismiss="modal">Confirmer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="b-example-divider"></div>
+
+  <script>
+    let selectedImageId;
+
+    // Add click event listener to each image
+    document.querySelectorAll("#imageContainer img").forEach((img) => {
+      img.addEventListener("click", function () {
+        // Remove selected class from any previously selected image
+        document.querySelectorAll(".selected").forEach((selectedImg) => {
+          selectedImg.classList.remove("selected");
+        });
+
+        // Add selected class to the clicked image
+        img.classList.add("selected");
+
+        // Update selected image ID
+        selectedImageId = img.dataset.id;
+      });
+    });
+
+    document.getElementById("confirmButton").addEventListener("click", function () {
+      if (selectedImageId) {
+        fetch('/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedImageId })
+        })
+          .then(response => response.text())
+          .then(result => alert(result))
+          .catch(error => console.error('Error:', error));
+      } else {
+        alert('Please select an image.');
+      }
+    });
+  </script>
+</body>
+
+</html>
