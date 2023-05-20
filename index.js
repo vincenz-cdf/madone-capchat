@@ -59,7 +59,7 @@ app.post('/imageset', multer().single('images'), (req, res) => {
 // Serve the login HTML page
 app.get('/login', (req, res) => {
     console.log(__dirname)
-    res.sendFile(__dirname + '/login.html');
+    res.sendFile(__dirname + '/public/login.html');
 });
 
 // Serve the register HTML page
