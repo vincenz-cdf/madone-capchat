@@ -43,25 +43,6 @@ app.get('/', (req, res) => {
     });
 });
 
-app.get('/newImages', (req, res) => {
-    const sqlFalse = 'SELECT * FROM image WHERE singular = false ORDER BY RAND() LIMIT 7';
-    const sqlTrue = 'SELECT * FROM image WHERE singular = true ORDER BY RAND() LIMIT 1';
-
-    connection.query(sqlFalse, function (err, resultsFalse) {
-        if (err) throw err;
-
-        connection.query(sqlTrue, function (err, resultsTrue) {
-            if (err) throw err;
-
-            let combinedResults = resultsFalse.concat(resultsTrue);
-            combinedResults.sort(() => Math.random() - 0.5);
-
-            res.render('capchat/partials/images', { hint: resultsTrue[0].hint, images: combinedResults });
-        });
-    });
-});
-
-
 
 app.post('/check', (req, res) => {
     // SQL Query to check whether the image with the given ID is singular
@@ -72,22 +53,16 @@ app.post('/check', (req, res) => {
 
         // If singular is true, send 'Yes', else send 'No'
         if (results[0].singular) {
-            res.render('login');
+            res.json('Yes');
         } else {
-            res.json('retry');
+            res.json('No');
         }
     });
 });
 
 app.post('/endOfTime', (req, res) => {
-    if(req.isZero) {
-        res.send('no human');
-    } else {
-        res.send('retry');
-    }
-    
+    res.send('retry');
 });
-
 
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap/dist/'));
 app.set('views', path.join(__dirname, 'views'));

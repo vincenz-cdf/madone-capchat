@@ -28,11 +28,10 @@ document.getElementById("confirmButton").addEventListener("click", function () {
         })
             .then(response => response.json())
             .then(result => {
-                if (result === 'retry' && initialTime > 5) {
+                if (result === 'No' && initialTime > 5) {
                     initialTime -= 5;
                     clearInterval(downloadTimer);
                     startTimer(initialTime);
-                    loadNewImages();
                 }
                 alert(result);
             })
@@ -54,10 +53,6 @@ function startTimer(duration) {
                 .then(response => response.text())
                 .then(result => {
                     alert(result);
-
-                    // Fetch new images from the server
-                    loadNewImages();
-
                     if (initialTime <= 5) {
                         // refreshing the page
                         location.reload();
@@ -68,7 +63,6 @@ function startTimer(duration) {
                     }
                 })
                 .catch(error => console.error('Error:', error));
-
         } else {
             document.getElementById("progressBar").style.width = (timeleft * 100 / duration) + "%";
             document.getElementById("timer").innerHTML = timeleft + "s";
@@ -76,18 +70,6 @@ function startTimer(duration) {
         timeleft -= 1;
     }, 1000);
 }
-
-function loadNewImages() {
-    fetch('/newImages')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('imageContainer').innerHTML = data;
-  
-      document.querySelectorAll("#imageContainer img").forEach((img) => {
-        img.addEventListener("click", imageClickListener);
-      });
-    });
-  }
 
 document.addEventListener('DOMContentLoaded', (event) => {
     startTimer(initialTime);
