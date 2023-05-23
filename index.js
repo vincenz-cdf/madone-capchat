@@ -70,9 +70,8 @@ app.post('/check', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.render('login');
+    res.render('auth/login/login');
 });
-
 
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap/dist/'));
 app.set('views', path.join(__dirname, 'views'));
@@ -80,5 +79,6 @@ app.set('view engine', 'ejs');
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
 app.use(express.static('views/capchat'));
+app.use(express.static('views/auth/login'));
 
 app.listen(3000, () => console.log('Server started'));
