@@ -62,12 +62,17 @@ app.post('/check', (req, res) => {
     connection.query(sqlCheck, [req.body.id], function (err, results) {
         if (err) throw err;
         if (results[0].singular) {
-            res.send('Yes');
+            res.json({ redirect: '/login' });
         } else {
-            res.send('No');
+            res.json({ singular: false });
         }
     });
 });
+
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
 
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap/dist/'));
 app.set('views', path.join(__dirname, 'views'));

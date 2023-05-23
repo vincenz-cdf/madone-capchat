@@ -25,14 +25,15 @@ document.getElementById("confirmButton").addEventListener("click", function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: selectedImageId })
         })
-            .then(response => response.text())
-            .then(result => {
-                alert(result);
-                if (result === 'No') {
-                    resetTimerAndImages();
-                }
-            })
-            .catch(error => console.error('Error:', error));
+        .then(response => response.json())
+        .then(data => {
+            if (data.singular === false) {
+                resetTimerAndImages();
+            } else if (data.redirect) {
+                window.location.href = data.redirect;
+            }
+        })
+        .catch(error => console.error('Error:', error));
     } else {
         alert('Please select an image.');
     }
@@ -96,8 +97,12 @@ function resetTimerAndImages() {
             // Reset timer
             if (initialTime > 5) {
                 initialTime -= 5;
+                startTimer(initialTime);
+            } else {
+                alert("No Human");
+                location.reload();
             }
-            startTimer(initialTime);
+            
         })
         .catch(error => console.error('Error:', error));
 }
