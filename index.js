@@ -3,6 +3,8 @@ const mysql = require('mysql');
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(express.json());
@@ -12,7 +14,7 @@ app.use(bodyParser.json());
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'password',
+    password: '',
     database: 'capchat'
 });
 
@@ -71,6 +73,23 @@ app.post('/check', (req, res) => {
 
 app.get('/login', (req, res) => {
     res.render('auth/login/login');
+});
+
+app.post('/signup', (req, res) => {
+    const username = req.body.username;
+    const password = bcrypt.hashSync(req.body.password, 8);
+
+    connection.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, password], function(error, results, fields) {
+        if (error) {
+            res.send({ success: false, message: error.sqlMessage });
+        } else {
+            const token = jwt.sign({ id: results.insertId }, 'myverylongandcomplexsecretkey', {
+                expiresIn: 86400 // expires in 24 hours
+            });
+
+            res.send({ success: true, message: "User registered successfully!", token: token });
+        }
+    });
 });
 
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap/dist/'));
