@@ -5,18 +5,26 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const cookieParser = require('cookie-parser');
+require('dotenv').config();
+
+
+const verifyToken = require('./middleware');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: process.env.DB_PASSWORD,
     database: 'capchat'
 });
+
+
 
 connection.connect(function (err) {
     if (err) {
@@ -27,6 +35,61 @@ connection.connect(function (err) {
 });
 
 app.get('/', (req, res) => {
+    res.render('auth/login/login');
+});
+
+app.get('/login', (req, res) => {
+    res.render('auth/login/login');
+});
+
+app.post('/signin', async (req, res) => {
+    const { username, password } = req.body;
+
+    const sqlCheck = 'SELECT * FROM user WHERE username = ?';
+    connection.query(sqlCheck, [username], async function (err, results) {
+        if (err) throw err;
+
+        if (results.length > 0) {
+            const comparison = await bcrypt.compare(password, results[0].password)
+            if (comparison) {
+                // create token
+                const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, {
+                    expiresIn: 3600 // expires in 24 hours
+                });
+
+                // set the cookie
+                res.cookie('authToken', token, { httpOnly: true, sameSite: 'strict' });
+
+                // send success response
+                res.status(200).send({ auth: true, success: true });
+            } else {
+                res.send({ auth: false, message: 'Invalid password', success: false });
+            }
+        } else {
+            res.send({ auth: false, message: 'User not found', success: false });
+        }
+    });
+});
+
+
+app.get('/register', (req, res) => {
+    res.render('auth/register/register');
+});
+
+app.post('/signup', (req, res) => {
+    const username = req.body.username;
+    const password = bcrypt.hashSync(req.body.password, 8);
+
+    connection.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, password], function (error, results, fields) {
+        if (error) {
+            res.send({ success: false, message: error.sqlMessage });
+        } else {
+            res.send({ success: true, message: "User registered successfully!" });
+        }
+    });
+});
+
+app.get('/capchat', verifyToken, (req, res) => {
     getImagesAndRender(req, res);
 });
 
@@ -71,27 +134,6 @@ app.post('/check', (req, res) => {
     });
 });
 
-app.get('/login', (req, res) => {
-    res.render('auth/login/login');
-});
-
-app.post('/signup', (req, res) => {
-    const username = req.body.username;
-    const password = bcrypt.hashSync(req.body.password, 8);
-
-    connection.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, password], function(error, results, fields) {
-        if (error) {
-            res.send({ success: false, message: error.sqlMessage });
-        } else {
-            const token = jwt.sign({ id: results.insertId }, 'myverylongandcomplexsecretkey', {
-                expiresIn: 86400 // expires in 24 hours
-            });
-
-            res.send({ success: true, message: "User registered successfully!", token: token });
-        }
-    });
-});
-
 app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap/dist/'));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -99,5 +141,6 @@ app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
 app.use(express.static('views/capchat'));
 app.use(express.static('views/auth/login'));
+app.use(express.static('views/auth/register'));
 
 app.listen(3000, () => console.log('Server started'));

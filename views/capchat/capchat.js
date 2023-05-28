@@ -25,19 +25,27 @@ document.getElementById("confirmButton").addEventListener("click", function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: selectedImageId })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.singular === false) {
-                resetTimerAndImages();
-            } else if (data.redirect) {
-                window.location.href = data.redirect;
-            }
-        })
-        .catch(error => console.error('Error:', error));
+            .then(response => {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json();
+                }
+                throw new TypeError("Oops, we didn't get JSON!");
+            })
+            .then(data => {
+                if (data.singular === false) {
+                    resetTimerAndImages();
+                } else if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            })
+            .catch(error => console.error('Error:', error));
     } else {
         alert('Please select an image.');
     }
 });
+
+
 
 let timeleft;
 let downloadTimer;
@@ -102,7 +110,7 @@ function resetTimerAndImages() {
                 alert("No Human");
                 location.reload();
             }
-            
+
         })
         .catch(error => console.error('Error:', error));
 }

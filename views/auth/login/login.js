@@ -1,25 +1,28 @@
-// signup.js
-
-document.getElementById("sign-up-form").addEventListener("submit", function(event) {
+document.getElementById("sign-in-form").addEventListener("submit", function(event) {
     event.preventDefault();
 
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    fetch('/signup', {
+    fetch('/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username, password: password })
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                localStorage.setItem('token', data.token);
-                alert('Signup successful');
-                // Redirect to another page
-            } else {
-                alert('Signup failed: ' + data.message);
-            }
-        })
-        .catch(error => console.error('Error:', error));
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            throw new Error('Network response was not ok.');
+        }
+    })
+    .then(data => {
+        if (data.auth) {
+            alert('Signin successful');
+            window.location.href = '/capchat';
+        } else {
+            alert('Signin failed: ' + data.message);
+        }
+    })
+    .catch(error => console.error('Error:', error));
 });
