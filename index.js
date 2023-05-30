@@ -34,6 +34,11 @@ connection.connect(function (err) {
     console.log('connected as id ' + connection.threadId);
 });
 
+app.get('/api/data', (req, res) => {
+    const data = { message: 'Hello, world!' };
+    res.json(data);
+  });
+
 app.get('/', (req, res) => {
     res.render('auth/login/login');
 });
