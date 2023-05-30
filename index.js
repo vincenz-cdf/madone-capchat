@@ -94,7 +94,7 @@ app.post('/signup', (req, res) => {
     });
 });
 
-app.get('/capchat', verifyToken, (req, res) => {
+app.get('/capchat', (req, res) => {
     getImagesAndRender(req, res);
 });
 
@@ -122,7 +122,7 @@ function getImagesAndRender(req, res) {
             if (err) throw err;
             let combinedResults = resultsFalse.concat(resultsTrue);
             combinedResults.sort(() => Math.random() - 0.5);
-            res.render('capchat/capchat', { hint: resultsTrue[0].hint, images: combinedResults });
+        res.json({ hint: resultsTrue[0].hint, images: combinedResults });
         });
     });
 }
