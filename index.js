@@ -19,7 +19,7 @@ app.use(cookieParser());
 
 const connection = mysql.createConnection({
     host: 'localhost',
-    user: 'root',
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: 'capchat'
 });
