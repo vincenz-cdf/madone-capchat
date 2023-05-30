@@ -34,11 +34,6 @@ connection.connect(function (err) {
     console.log('connected as id ' + connection.threadId);
 });
 
-app.get('/api/data', (req, res) => {
-    const data = { message: 'Hello, world!' };
-    res.json(data);
-  });
-
 app.get('/', (req, res) => {
     res.render('auth/login/login');
 });
@@ -98,7 +93,7 @@ app.get('/capchat', (req, res) => {
     getImagesAndRender(req, res);
 });
 
-app.post('/newSet', (req, res) => {
+app.post('/capchat/newSet', (req, res) => {
     const sqlFalse = 'SELECT * FROM image WHERE singular = false ORDER BY RAND() LIMIT 7';
     const sqlTrue = 'SELECT * FROM image WHERE singular = true ORDER BY RAND() LIMIT 1';
     connection.query(sqlFalse, function (err, resultsFalse) {
@@ -127,7 +122,7 @@ function getImagesAndRender(req, res) {
     });
 }
 
-app.post('/check', (req, res) => {
+app.post('/capchat/check', (req, res) => {
     const sqlCheck = 'SELECT singular FROM image WHERE id = ?';
     connection.query(sqlCheck, [req.body.id], function (err, results) {
         if (err) throw err;
