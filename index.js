@@ -13,7 +13,12 @@ const verifyToken = require('./middleware');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+var corsOptions = {
+    origin: 'http://localhost:4200', // or your angular app's origin
+    credentials: true
+}
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -77,8 +82,18 @@ app.post('/register', (req, res) => {
     });
 });
 
-app.get('/capchat', (req, res) => {
-    getImagesAndRender(req, res);
+app.get('/capchat', verifyToken, (req, res) => {
+    const sqlFalse = 'SELECT * FROM image WHERE singular = false ORDER BY RAND() LIMIT 7';
+    const sqlTrue = 'SELECT * FROM image WHERE singular = true ORDER BY RAND() LIMIT 1';
+    connection.query(sqlFalse, function (err, resultsFalse) {
+        if (err) throw err;
+        connection.query(sqlTrue, function (err, resultsTrue) {
+            if (err) throw err;
+            let combinedResults = resultsFalse.concat(resultsTrue);
+            combinedResults.sort(() => Math.random() - 0.5);
+            res.json({ hint: resultsTrue[0].hint, images: combinedResults });
+        });
+    });
 });
 
 app.post('/capchat/newSet', (req, res) => {
@@ -95,20 +110,6 @@ app.post('/capchat/newSet', (req, res) => {
     });
 });
 
-
-function getImagesAndRender(req, res) {
-    const sqlFalse = 'SELECT * FROM image WHERE singular = false ORDER BY RAND() LIMIT 7';
-    const sqlTrue = 'SELECT * FROM image WHERE singular = true ORDER BY RAND() LIMIT 1';
-    connection.query(sqlFalse, function (err, resultsFalse) {
-        if (err) throw err;
-        connection.query(sqlTrue, function (err, resultsTrue) {
-            if (err) throw err;
-            let combinedResults = resultsFalse.concat(resultsTrue);
-            combinedResults.sort(() => Math.random() - 0.5);
-        res.json({ hint: resultsTrue[0].hint, images: combinedResults });
-        });
-    });
-}
 
 app.post('/capchat/check', (req, res) => {
     const sqlCheck = 'SELECT singular FROM image WHERE id = ?';
