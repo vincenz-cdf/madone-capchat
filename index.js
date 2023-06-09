@@ -34,16 +34,7 @@ connection.connect(function (err) {
     console.log('connected as id ' + connection.threadId);
 });
 
-app.get('/', (req, res) => {
-    res.render('auth/login/login');
-});
-
-app.get('/login', (req, res) => {
-    res.render('auth/login/login');
-});
-
 app.post('/login', async (req, res) => {
-    console.log(req.body)
     const { username, password } = req.body;
 
     const sqlCheck = 'SELECT * FROM user WHERE username = ?';
@@ -64,18 +55,14 @@ app.post('/login', async (req, res) => {
                 // send success response
                 res.status(200).send({ auth: true, success: true });
             } else {
-                res.send({ auth: false, message: 'Invalid password', success: false });
+                res.send({ auth: false, message: 'Identifiant ou mdp invalide', success: false });
             }
         } else {
-            res.send({ auth: false, message: 'User not found', success: false });
+            res.send({ auth: false, message: 'Identifiant ou mdp invalide', success: false });
         }
     });
 });
 
-
-app.get('/register', (req, res) => {
-    res.render('auth/register/register');
-});
 
 app.post('/register', (req, res) => {
     const username = req.body.username;
