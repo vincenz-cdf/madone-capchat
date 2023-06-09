@@ -42,7 +42,8 @@ app.get('/login', (req, res) => {
     res.render('auth/login/login');
 });
 
-app.post('/signin', async (req, res) => {
+app.post('/login', async (req, res) => {
+    console.log(req.body)
     const { username, password } = req.body;
 
     const sqlCheck = 'SELECT * FROM user WHERE username = ?';
@@ -76,7 +77,7 @@ app.get('/register', (req, res) => {
     res.render('auth/register/register');
 });
 
-app.post('/signup', (req, res) => {
+app.post('/register', (req, res) => {
     const username = req.body.username;
     const password = bcrypt.hashSync(req.body.password, 8);
 
