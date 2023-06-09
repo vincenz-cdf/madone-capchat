@@ -51,7 +51,7 @@ app.post('/login', async (req, res) => {
             if (comparison) {
                 // create token
                 const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, {
-                    expiresIn: 3600 // expires in 24 hours
+                    expiresIn: 60 // expires in 24 hours
                 });
 
                 // set the cookie
@@ -123,13 +123,6 @@ app.post('/capchat/check', (req, res) => {
     });
 });
 
-app.use('/bootstrap', express.static(__dirname + '/node_modules/bootstrap/dist/'));
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
-
-app.use(express.static('views/capchat'));
-app.use(express.static('views/auth/login'));
-app.use(express.static('views/auth/register'));
 
 app.listen(3000, () => console.log('Server started'));
