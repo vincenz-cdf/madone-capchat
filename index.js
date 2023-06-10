@@ -51,7 +51,7 @@ app.post('/login', async (req, res) => {
             if (comparison) {
                 // create token
                 const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, {
-                    expiresIn: 60 // expires in 24 hours
+                    expiresIn: 60 // expires in 1 minutes
                 });
 
                 // set the cookie
@@ -82,12 +82,14 @@ app.post('/register', (req, res) => {
     });
 });
 
-app.get('/capchat', verifyToken, (req, res) => {
-    const sqlFalse = 'SELECT * FROM image WHERE singular = false ORDER BY RAND() LIMIT 7';
-    const sqlTrue = 'SELECT * FROM image WHERE singular = true ORDER BY RAND() LIMIT 1';
-    connection.query(sqlFalse, function (err, resultsFalse) {
+app.get('/capchat/:id', (req, res) => {
+    const id = req.params.id;
+
+    const sqlFalse = 'SELECT * FROM image WHERE image_sets_id = ? AND singular = false ORDER BY RAND() LIMIT 7';
+    const sqlTrue = 'SELECT * FROM image WHERE image_sets_id = ? AND singular = true ORDER BY RAND() LIMIT 1';
+    connection.query(sqlFalse, [id], function (err, resultsFalse) {
         if (err) throw err;
-        connection.query(sqlTrue, function (err, resultsTrue) {
+        connection.query(sqlTrue, [id] ,function (err, resultsTrue) {
             if (err) throw err;
             let combinedResults = resultsFalse.concat(resultsTrue);
             combinedResults.sort(() => Math.random() - 0.5);
@@ -122,6 +124,40 @@ app.post('/capchat/check', (req, res) => {
         }
     });
 });
+
+app.get('/capchats', (req, res) => {
+    const query = `
+        SELECT 
+            image_sets.id,
+            image_sets.name,
+            image_sets.theme,
+            user.username,
+            (SELECT path FROM image WHERE image_sets_id = image_sets.id LIMIT 1) as thumbnail,
+            (SELECT COUNT(*) FROM image WHERE image_sets_id = image_sets.id) as count
+        FROM 
+            image_sets 
+        INNER JOIN 
+            user 
+        ON 
+            image_sets.user_id = user.id;
+    `;
+
+    connection.query(query, function (err, results) {
+        if (err) throw err;
+        results = results.map(result => {
+            return {
+                id: result.id,
+                name: result.name,
+                theme: result.theme,
+                username: result.username,
+                thumbnail: result.thumbnail,
+                count: result.count,
+            };
+        });
+        res.json(results);
+    });
+});
+
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
