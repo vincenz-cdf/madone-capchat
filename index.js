@@ -89,7 +89,7 @@ app.get('/capchat/:id', (req, res) => {
     const sqlTrue = 'SELECT * FROM image WHERE image_sets_id = ? AND singular = true ORDER BY RAND() LIMIT 1';
     connection.query(sqlFalse, [id], function (err, resultsFalse) {
         if (err) throw err;
-        connection.query(sqlTrue, [id] ,function (err, resultsTrue) {
+        connection.query(sqlTrue, [id], function (err, resultsTrue) {
             if (err) throw err;
             let combinedResults = resultsFalse.concat(resultsTrue);
             combinedResults.sort(() => Math.random() - 0.5);
@@ -128,18 +128,23 @@ app.post('/capchat/check', (req, res) => {
 app.get('/capchats', (req, res) => {
     const query = `
         SELECT 
-            image_sets.id,
-            image_sets.name,
-            image_sets.theme,
-            user.username,
-            (SELECT path FROM image WHERE image_sets_id = image_sets.id LIMIT 1) as thumbnail,
-            (SELECT COUNT(*) FROM image WHERE image_sets_id = image_sets.id) as count
-        FROM 
-            image_sets 
-        INNER JOIN 
-            user 
-        ON 
-            image_sets.user_id = user.id;
+        image_sets.id,
+        image_sets.name,
+        theme.label,
+        user.username,
+        (SELECT path FROM image WHERE image_sets_id = image_sets.id LIMIT 1) as thumbnail,
+        (SELECT COUNT(*) FROM image WHERE image_sets_id = image_sets.id) as count
+    FROM 
+        image_sets 
+    INNER JOIN 
+        user 
+    ON 
+        image_sets.user_id = user.id
+    INNER JOIN
+        theme
+    ON
+        image_sets.theme_id = theme.id;
+
     `;
 
     connection.query(query, function (err, results) {
@@ -148,12 +153,23 @@ app.get('/capchats', (req, res) => {
             return {
                 id: result.id,
                 name: result.name,
-                theme: result.theme,
+                theme: result.label,
                 username: result.username,
                 thumbnail: result.thumbnail,
                 count: result.count,
             };
         });
+        res.json(results);
+    });
+});
+
+app.get('/themes', (req, res) => {
+    const query = `
+        SELECT * FROM theme;
+    `;
+
+    connection.query(query, function (err, results) {
+        if (err) throw err;
         res.json(results);
     });
 });
