@@ -82,6 +82,11 @@ app.post('/register', (req, res) => {
     });
 });
 
+app.get('/isAuthenticated', verifyToken, (req, res) => {
+    res.status(200).send({ isAuthenticated: true });
+});
+
+
 app.get('/capchat/:id', (req, res) => {
     const id = req.params.id;
 
