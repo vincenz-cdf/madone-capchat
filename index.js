@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
+const fs = require('fs');
+
 require('dotenv').config();
 
 
@@ -51,7 +53,7 @@ app.post('/login', async (req, res) => {
             if (comparison) {
                 // create token
                 const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, {
-                    expiresIn: 60 // expires in 1 minutes
+                    expiresIn: 3600 // expires in 1 hour
                 });
 
                 // set the cookie
@@ -135,6 +137,7 @@ app.get('/capchats', (req, res) => {
         SELECT 
         image_sets.id,
         image_sets.name,
+        theme.id as theme_id,
         theme.label,
         user.username,
         (SELECT path FROM image WHERE image_sets_id = image_sets.id LIMIT 1) as thumbnail,
@@ -155,9 +158,11 @@ app.get('/capchats', (req, res) => {
     connection.query(query, function (err, results) {
         if (err) throw err;
         results = results.map(result => {
+            console.log(result)
             return {
                 id: result.id,
                 name: result.name,
+                theme_id: result.theme_id,
                 theme: result.label,
                 username: result.username,
                 thumbnail: result.thumbnail,
@@ -178,7 +183,6 @@ app.get('/themes', (req, res) => {
         res.json(results);
     });
 });
-
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
