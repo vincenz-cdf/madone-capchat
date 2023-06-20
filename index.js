@@ -25,13 +25,6 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type', 'Authorization');
-    next();
-});
-
 const connection = mysql.createConnection({
     host: 'localhost',
     user: process.env.DB_USER,
@@ -190,8 +183,7 @@ app.get('/themes', (req, res) => {
     });
 });
 
-app.post('/imageset', verifyToken, (req, res, next) => {
-    console.log(req.userId);
+app.post('/imageset', (req, res, next) => {
 
     const form = new formidable.IncomingForm();
 
