@@ -1,3 +1,4 @@
+const formidable = require('formidable');
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
@@ -24,14 +25,19 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type', 'Authorization');
+    next();
+});
+
 const connection = mysql.createConnection({
     host: 'localhost',
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: 'capchat'
 });
-
-
 
 connection.connect(function (err) {
     if (err) {
@@ -181,6 +187,47 @@ app.get('/themes', (req, res) => {
     connection.query(query, function (err, results) {
         if (err) throw err;
         res.json(results);
+    });
+});
+
+app.post('/imageset', verifyToken, (req, res, next) => {
+    console.log(req.userId);
+
+    const form = new formidable.IncomingForm();
+
+    const token = req.headers['authorization'];  // Get the token from the headers
+    jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+      if (err) {
+        console.log(err)
+      } else {
+        const userId = decoded.id;
+        console.log(userId)
+      }
+    });
+
+    form.parse(req, (err, fields, files) => {
+        if (err) {
+            next(err);
+            return;
+        }
+
+        for (let fileKey in files) {
+            const file = files[fileKey];
+            const hint = fields[fileKey.replace('file', 'hint')];
+
+            const folder = hint ? './uploads/with_hint' : './uploads/without_hint';
+
+            const newPath = path.join(__dirname, folder, file.name);
+            fs.rename(file.path, newPath, (err) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+            });
+        }
+
+
+        res.json({ fields: fields, files: files });
     });
 });
 
