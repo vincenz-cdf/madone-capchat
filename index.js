@@ -64,7 +64,7 @@ app.post('/login', async (req, res) => {
 
 app.get('/currentUser', verifyToken, (req, res) => {
     const userId = req.userId;
-    const sqlCheck = 'SELECT * FROM user WHERE id = ?';
+    const sqlCheck = 'SELECT id, username, email FROM user WHERE id = ?';
     connection.query(sqlCheck, [userId], function (err, results) {
         if (err) throw err;
         res.json(results[0]);
@@ -184,35 +184,68 @@ app.get('/themes', (req, res) => {
     });
 });
 
-app.post('/imageset', (req, res, next) => {
+app.post('/imageset', async (req, res, next) => {
 
     const form = new formidable.IncomingForm();
 
-    form.parse(req, (err, fields, files) => {
+    form.parse(req, async (err, fields, files) => {
         if (err) {
             next(err);
             return;
         }
 
+        let setId = null;
+        //if set_id != null
+        await new Promise((resolve, reject) => {
+            connection.query('INSERT INTO image_sets (user_id, name, theme_id) VALUES (?, ?, ?)', [fields.user_id, fields.set_name, fields.theme_id], function (error, results, fields) {
+                if (error) {
+                    reject(error);
+                } else {
+                    setId = results.insertId; // Changed from const setId to setId
+                    resolve();
+                }
+            });
+        });
+
         for (let fileKey in files) {
             const file = files[fileKey];
             const hint = fields[fileKey.replace('file', 'hint')];
 
-            const folder = hint ? './uploads/with_hint' : './uploads/without_hint';
+            // Use fields.theme_id as the folder name
+            const folder = hint ? `./resources/${setId}/singuliers` : `./resources/${setId}/neutres`;
 
             const newPath = path.join(__dirname, folder, file.name);
-            fs.rename(file.path, newPath, (err) => {
+
+            fs.mkdir(path.dirname(newPath), { recursive: true }, (err) => {
                 if (err) {
                     console.log(err);
                     return;
                 }
+
+                // Then move the file
+                fs.rename(file.path, newPath, (err) => {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                });
+            });
+
+            const insertPath = hint ? "/resources/" + setId + "/singuliers/" + file.name : "/resources/" + setId + "/neutres/" + file.name
+            connection.query('INSERT INTO image (image_sets_id, singular, path, hint) VALUES (?, ?, ?, ?)', [
+                setId, 
+                hint ? true : false, 
+                insertPath,
+                hint
+            ], function (error, results, fields) {
             });
         }
-
 
         res.json({ fields: fields, files: files });
     });
 });
+
+
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
