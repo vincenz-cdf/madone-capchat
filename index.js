@@ -50,22 +50,24 @@ app.post('/login', async (req, res) => {
         if (results.length > 0) {
             const comparison = await bcrypt.compare(password, results[0].password)
             if (comparison) {
-                // create token
-                const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, {
-                    expiresIn: 3600 // expires in 1 hour
-                });
-
-                // set the cookie
+                const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, { expiresIn: 3600 });
                 res.cookie('authToken', token, { httpOnly: true, sameSite: 'strict' });
-
-                // send success response
-                res.status(200).send({ auth: true, success: true });
+                res.status(200).send({ auth: true, success: true, redirect: '/profile' });
             } else {
                 res.send({ auth: false, message: 'Identifiant ou mdp invalide', success: false });
             }
         } else {
             res.send({ auth: false, message: 'Identifiant ou mdp invalide', success: false });
         }
+    });
+});
+
+app.get('/currentUser', verifyToken, (req, res) => {
+    const userId = req.userId;
+    const sqlCheck = 'SELECT * FROM user WHERE id = ?';
+    connection.query(sqlCheck, [userId], function (err, results) {
+        if (err) throw err;
+        res.json(results[0]);
     });
 });
 
@@ -157,7 +159,6 @@ app.get('/capchats', (req, res) => {
     connection.query(query, function (err, results) {
         if (err) throw err;
         results = results.map(result => {
-            console.log(result)
             return {
                 id: result.id,
                 name: result.name,
@@ -186,16 +187,6 @@ app.get('/themes', (req, res) => {
 app.post('/imageset', (req, res, next) => {
 
     const form = new formidable.IncomingForm();
-
-    const token = req.headers['authorization'];  // Get the token from the headers
-    jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
-      if (err) {
-        console.log(err)
-      } else {
-        const userId = decoded.id;
-        console.log(userId)
-      }
-    });
 
     form.parse(req, (err, fields, files) => {
         if (err) {
