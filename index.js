@@ -142,7 +142,7 @@ app.get('/capchats', (req, res) => {
         theme.id as theme_id,
         theme.label,
         user.username,
-        (SELECT path FROM image WHERE image_sets_id = image_sets.id LIMIT 1) as thumbnail,
+        (SELECT path FROM image WHERE image_sets_id = image_sets.id ORDER BY RAND() LIMIT 1) as thumbnail,
         (SELECT COUNT(*) FROM image WHERE image_sets_id = image_sets.id) as count
     FROM 
         image_sets 
