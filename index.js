@@ -74,9 +74,10 @@ app.get('/currentUser', verifyToken, (req, res) => {
 
 app.post('/register', (req, res) => {
     const username = req.body.username;
+    const email = req.body.email;
     const password = bcrypt.hashSync(req.body.password, 8);
 
-    connection.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, password], function (error, results, fields) {
+    connection.query('INSERT INTO user (username, email, password) VALUES (?, ?, ?)', [username, email, password], function (error, results, fields) {
         if (error) {
             res.send({ success: false, message: error.sqlMessage });
         } else {
