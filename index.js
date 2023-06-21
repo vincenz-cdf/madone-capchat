@@ -185,7 +185,7 @@ app.get('/themes', (req, res) => {
     });
 });
 
-app.get('/imageset/:id', (req, res) => {
+app.get('/imageset/:id/images', (req, res) => {
     const query = `
         SELECT * FROM image where image_sets_id = ?;
     `;
