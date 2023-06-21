@@ -185,6 +185,18 @@ app.get('/themes', (req, res) => {
     });
 });
 
+app.get('/imageset/:id', (req, res) => {
+    const query = `
+        SELECT * FROM image where image_sets_id = ?;
+    `;
+
+    connection.query(query, [req.params.id], function (err, results) {
+        if (err) throw err;
+        res.json(results);
+    });
+
+});
+
 app.post('/imageset', async (req, res, next) => {
 
     const form = new formidable.IncomingForm();
