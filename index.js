@@ -52,7 +52,7 @@ app.post('/login', async (req, res) => {
             if (comparison) {
                 const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, { expiresIn: 3600 });
                 res.cookie('authToken', token, { httpOnly: true, sameSite: 'strict' });
-                res.status(200).send({ auth: true, success: true, redirect: '/profile' });
+                res.status(200).send({ auth: true, success: true, redirect: '/' });
             } else {
                 res.send({ auth: false, message: 'Identifiant ou mdp invalide', success: false });
             }
@@ -127,7 +127,7 @@ app.post('/capchat/check', (req, res) => {
     connection.query(sqlCheck, [req.body.id], function (err, results) {
         if (err) throw err;
         if (results[0].singular) {
-            res.json({ redirect: '/login' });
+            res.json({ redirect: '/' });
         } else {
             res.json({ singular: false });
         }
@@ -206,53 +206,97 @@ app.post('/imageset', async (req, res, next) => {
             next(err);
             return;
         }
-
-        let setId = null;
-        //if set_id != null
-        await new Promise((resolve, reject) => {
-            connection.query('INSERT INTO image_sets (user_id, name, theme_id) VALUES (?, ?, ?)', [fields.user_id, fields.set_name, fields.theme_id], function (error, results, fields) {
-                if (error) {
-                    reject(error);
-                } else {
-                    setId = results.insertId; // Changed from const setId to setId
-                    resolve();
-                }
+        if (fields.image_sets_id != 'null') {
+            // Update existing image sets
+            await new Promise((resolve, reject) => {
+                connection.query('UPDATE image_sets SET user_id = ?, name = ?, theme_id = ? WHERE id = ?', [fields.user_id, fields.set_name, fields.theme_id, fields.image_sets_id], function (error, results) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve();
+                    }
+                });
             });
-        });
 
-        for (let fileKey in files) {
-            const file = files[fileKey];
-            const hint = fields[fileKey.replace('file', 'hint')];
+            // Update existing images
+            for (let fileKey in files) {
+                const file = files[fileKey];
+                const hint = fields[fileKey.replace('file', 'hint')];
+                const imageId = fields[fileKey.replace('file', 'imageId')];
 
-            // Use fields.theme_id as the folder name
-            const folder = hint ? `./resources/${setId}/singuliers` : `./resources/${setId}/neutres`;
+                // Use fields.theme_id as the folder name
+                const folder = hint ? `./resources/${fields.image_sets_id}/singuliers` : `./resources/${fields.image_sets_id}/neutres`;
 
-            const newPath = path.join(__dirname, folder, file.name);
+                const newPath = path.join(__dirname, folder, file.name);
 
-            fs.mkdir(path.dirname(newPath), { recursive: true }, (err) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
-
-                // Then move the file
                 fs.rename(file.path, newPath, (err) => {
                     if (err) {
                         console.log(err);
                         return;
                     }
                 });
-            });
 
-            const insertPath = hint ? "/resources/" + setId + "/singuliers/" + file.name : "/resources/" + setId + "/neutres/" + file.name
-            connection.query('INSERT INTO image (image_sets_id, singular, path, hint) VALUES (?, ?, ?, ?)', [
-                setId, 
-                hint ? true : false, 
-                insertPath,
-                hint
-            ], function (error, results, fields) {
+                const updatePath = hint ? "/resources/" + fields.image_sets_id + "/singuliers/" + file.name : "/resources/" + fields.image_sets_id + "/neutres/" + file.name;
+
+                await new Promise((resolve, reject) => {
+                    connection.query('UPDATE image SET singular = ?, path = ?, hint = ? WHERE image_sets_id = ? AND id = ?', [
+                        hint ? true : false,
+                        updatePath,
+                        hint,
+                        fields.image_sets_id,
+                        imageId
+                    ], function (error, results, fields) {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            }
+
+        } else {
+            let setId = null;
+            await new Promise((resolve, reject) => {
+                connection.query('INSERT INTO image_sets (user_id, name, theme_id) VALUES (?, ?, ?)', [fields.user_id, fields.set_name, fields.theme_id], function (error, results) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        setId = results.insertId; // Changed from const setId to setId
+                        resolve();
+                    }
+                });
             });
+        
+            for (let fileKey in files) {
+                const file = files[fileKey];
+                const hint = fields[fileKey.replace('file', 'hint')];
+        
+                // Use setId as the folder name
+                const folder = hint ? `./resources/${setId}/singuliers` : `./resources/${setId}/neutres`;
+        
+                const newPath = path.join(__dirname, folder, file.name);
+        
+                // Create the target directory if it doesn't exist
+                await fs.promises.mkdir(path.dirname(newPath), { recursive: true }).catch(console.error);
+        
+                // Then move the file
+                await fs.promises.rename(file.path, newPath).catch(console.error);
+        
+                const insertPath = hint ? "/resources/" + setId + "/singuliers/" + file.name : "/resources/" + setId + "/neutres/" + file.name
+                connection.query('INSERT INTO image (image_sets_id, singular, path, hint) VALUES (?, ?, ?, ?)', [
+                    setId, 
+                    hint ? true : false, 
+                    insertPath,
+                    hint
+                ], function (error, results) {
+                    if (error) {
+                        console.error(error);
+                    }
+                });
+            }
         }
+
 
         res.json({ fields: fields, files: files });
     });
