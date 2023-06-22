@@ -108,11 +108,11 @@ app.get('/capchat/:id', (req, res) => {
 });
 
 app.post('/capchat/newSet', (req, res) => {
-    const sqlFalse = 'SELECT * FROM image WHERE singular = false ORDER BY RAND() LIMIT 7';
-    const sqlTrue = 'SELECT * FROM image WHERE singular = true ORDER BY RAND() LIMIT 1';
-    connection.query(sqlFalse, function (err, resultsFalse) {
+    const sqlFalse = 'SELECT * FROM image WHERE singular = false AND image_sets_id = ? ORDER BY RAND() LIMIT 7';
+    const sqlTrue = 'SELECT * FROM image WHERE singular = true AND image_sets_id = ? ORDER BY RAND() LIMIT 1';
+    connection.query(sqlFalse, [req.body.id], function (err, resultsFalse) {
         if (err) throw err;
-        connection.query(sqlTrue, function (err, resultsTrue) {
+        connection.query(sqlTrue, [req.body.id], function (err, resultsTrue) {
             if (err) throw err;
             let combinedResults = resultsFalse.concat(resultsTrue);
             combinedResults.sort(() => Math.random() - 0.5);
@@ -122,23 +122,41 @@ app.post('/capchat/newSet', (req, res) => {
 });
 
 
-app.post('/capchat/check', (req, res) => {
+app.post('/capchat/check', async (req, res) => {
+    let destinationUrl = '/';
+
+    await new Promise((resolve, reject) => {
+        connection.query('select destination_url from image_sets where id = ?', [req.body.image_sets_id], function (error, results) {
+            if (error) {
+                reject(error);
+            } else {
+                // Make sure to pull out the destination_url from the first result
+                if (results.length > 0) {
+                    destinationUrl = results[0].destination_url;
+                }
+                resolve();
+            }
+        });
+    });
+
     const sqlCheck = 'SELECT singular FROM image WHERE id = ?';
     connection.query(sqlCheck, [req.body.id], function (err, results) {
         if (err) throw err;
         if (results[0].singular) {
-            res.json({ redirect: '/' });
+            res.json({ singular: true, url: destinationUrl });
         } else {
-            res.json({ singular: false });
+            res.json({ singular: false, url: "" });
         }
     });
 });
+
 
 app.get('/capchats', (req, res) => {
     const query = `
         SELECT 
         image_sets.id,
         image_sets.name,
+        image_sets.destination_url,
         theme.id as theme_id,
         theme.label,
         user.username,
@@ -163,6 +181,7 @@ app.get('/capchats', (req, res) => {
             return {
                 id: result.id,
                 name: result.name,
+                destination_url: result.destination_url,
                 theme_id: result.theme_id,
                 theme: result.label,
                 username: result.username,
@@ -209,13 +228,14 @@ app.post('/imageset', async (req, res, next) => {
         if (fields.image_sets_id != 'null') {
             // Update existing image sets
             await new Promise((resolve, reject) => {
-                connection.query('UPDATE image_sets SET user_id = ?, name = ?, theme_id = ? WHERE id = ?', [fields.user_id, fields.set_name, fields.theme_id, fields.image_sets_id], function (error, results) {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve();
-                    }
-                });
+                connection.query('UPDATE image_sets SET user_id = ?, name = ?, theme_id = ?, destination_url = ? WHERE id = ?',
+                    [fields.user_id, fields.set_name, fields.theme_id, fields.destination_url, fields.image_sets_id], function (error, results) {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve();
+                        }
+                    });
             });
 
             // Update existing images
@@ -258,7 +278,7 @@ app.post('/imageset', async (req, res, next) => {
         } else {
             let setId = null;
             await new Promise((resolve, reject) => {
-                connection.query('INSERT INTO image_sets (user_id, name, theme_id) VALUES (?, ?, ?)', [fields.user_id, fields.set_name, fields.theme_id], function (error, results) {
+                connection.query('INSERT INTO image_sets (user_id, name, theme_id, destination_url) VALUES (?, ?, ?, ?)', [fields.user_id, fields.set_name, fields.theme_id, fields.destination_url], function (error, results) {
                     if (error) {
                         reject(error);
                     } else {
@@ -267,26 +287,26 @@ app.post('/imageset', async (req, res, next) => {
                     }
                 });
             });
-        
+
             for (let fileKey in files) {
                 const file = files[fileKey];
                 const hint = fields[fileKey.replace('file', 'hint')];
-        
+
                 // Use setId as the folder name
                 const folder = hint ? `./resources/${setId}/singuliers` : `./resources/${setId}/neutres`;
-        
+
                 const newPath = path.join(__dirname, folder, file.name);
-        
+
                 // Create the target directory if it doesn't exist
                 await fs.promises.mkdir(path.dirname(newPath), { recursive: true }).catch(console.error);
-        
+
                 // Then move the file
                 await fs.promises.rename(file.path, newPath).catch(console.error);
-        
+
                 const insertPath = hint ? "/resources/" + setId + "/singuliers/" + file.name : "/resources/" + setId + "/neutres/" + file.name
                 connection.query('INSERT INTO image (image_sets_id, singular, path, hint) VALUES (?, ?, ?, ?)', [
-                    setId, 
-                    hint ? true : false, 
+                    setId,
+                    hint ? true : false,
                     insertPath,
                     hint
                 ], function (error, results) {
@@ -303,6 +323,16 @@ app.post('/imageset', async (req, res, next) => {
 });
 
 
+app.post('/theme', (req, res) => {
+    const name = req.body.name;
+    connection.query('INSERT INTO theme (label) VALUES (?)', [name], function (error, results, fields) {
+        if (error) {
+            res.send({ success: false, message: error.sqlMessage });
+        } else {
+            res.send({ success: true, message: "Theme create!" });
+        }
+    });
+});
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 

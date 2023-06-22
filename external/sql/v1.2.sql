@@ -1,2 +1,5 @@
 ALTER TABLE user
 ADD COLUMN email VARCHAR(255) NOT NULL;
+
+ALTER TABLE image_sets
+ADD COLUMN destination_url VARCHAR(255) NOT NULL;
