@@ -354,6 +354,12 @@ app.post('/theme', (req, res) => {
     });
 });
 
+app.post('/logout', (req, res) => {
+    res.clearCookie('authToken');
+    res.status(200).send({ success: true, message: "Logged out" });
+});
+
+
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
 app.listen(3000, () => console.log('Server started'));
