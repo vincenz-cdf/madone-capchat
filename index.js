@@ -171,8 +171,8 @@ app.post('/capchat/check', async (req, res) => {
 });
 
 
-app.get('/capchats', (req, res) => {
-    const query = `
+app.get('/capchats/:filter', (req, res) => {
+    let query = `
         SELECT 
         image_sets.id,
         image_sets.name,
@@ -195,6 +195,33 @@ app.get('/capchats', (req, res) => {
 
     `;
 
+    if (req.params.filter == 'category') {
+        query = `
+        SELECT 
+        theme.id as theme_id,
+        theme.label,
+        COUNT(image_sets.id) as image_sets_count,
+        (SELECT path FROM image WHERE image_sets_id = MIN(image_sets.id) ORDER BY RAND() LIMIT 1) as thumbnail,
+        (SELECT COUNT(*) FROM image 
+         INNER JOIN image_sets as is2 ON image.image_sets_id = is2.id 
+         WHERE is2.theme_id = theme.id) as count
+        FROM 
+            image_sets 
+        INNER JOIN 
+            user 
+        ON 
+            image_sets.user_id = user.id
+        INNER JOIN
+            theme
+        ON
+            image_sets.theme_id = theme.id
+        GROUP BY
+            theme.id, theme.label;
+    
+        `
+
+    }
+
     connection.query(query, function (err, results) {
         if (err) throw err;
         results = results.map(result => {
@@ -207,6 +234,7 @@ app.get('/capchats', (req, res) => {
                 username: result.username,
                 thumbnail: result.thumbnail,
                 count: result.count,
+                image_sets_count: result.image_sets_count
             };
         });
         res.json(results);
@@ -230,6 +258,27 @@ app.get('/imageset/:id/images', (req, res) => {
     `;
 
     connection.query(query, [req.params.id], function (err, results) {
+        if (err) throw err;
+        res.json(results);
+    });
+
+});
+
+app.get('/imageset/theme/:themeId/images', (req, res) => {
+    const query = `
+    SELECT 
+        image.*
+    FROM 
+        image 
+    INNER JOIN 
+        image_sets 
+    ON 
+        image.image_sets_id = image_sets.id
+    WHERE 
+        image_sets.theme_id = ?;
+    `;
+
+    connection.query(query, [req.params.themeId], function (err, results) {
         if (err) throw err;
         res.json(results);
     });
