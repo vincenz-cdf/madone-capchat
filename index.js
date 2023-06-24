@@ -71,9 +71,9 @@ app.get('/currentUser', verifyToken, (req, res) => {
     });
 });
 
-app.get('/users', (req, res) => {
-    const sqlCheck = 'SELECT id, username, email FROM user WHERE id != 1';
-    connection.query(sqlCheck, function (err, results) {
+app.post('/users', (req, res) => {
+    const sqlCheck = 'SELECT id, username, email FROM user WHERE id != 1 AND id != ?';
+    connection.query(sqlCheck, [req.body.id], function (err, results) {
         if (err) throw err;
         res.json(results);
     });
