@@ -43,7 +43,7 @@ connection.connect(function (err) {
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
-    const sqlCheck = 'SELECT * FROM user WHERE username = ?';
+    const sqlCheck = 'SELECT * FROM user WHERE email = ?';
     connection.query(sqlCheck, [username], async function (err, results) {
         if (err) throw err;
 
@@ -461,9 +461,10 @@ app.post('/theme', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-    res.clearCookie('authToken');
+    res.clearCookie('authToken', { path: '/', domain: 'http://localhost:3000' }); // replace 'your-domain.com' with your actual domain
     res.status(200).send({ success: true, message: "Logged out" });
 });
+
 
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
