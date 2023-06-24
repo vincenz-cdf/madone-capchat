@@ -97,14 +97,24 @@ app.post('/register', (req, res) => {
     const email = req.body.email;
     const password = bcrypt.hashSync(req.body.password, 8);
 
-    connection.query('INSERT INTO user (username, email, password) VALUES (?, ?, ?)', [username, email, password], function (error, results, fields) {
-        if (error) {
-            res.send({ success: false, message: error.sqlMessage });
+    const sqlCheck = 'SELECT * FROM user WHERE email = ?';
+    connection.query(sqlCheck, [email], function(err, results) {
+        if (err) throw err;
+
+        if (results.length > 0) {
+            res.send({ success: false, message: 'Email already registered' });
         } else {
-            res.send({ success: true, message: "User registered successfully!" });
+            connection.query('INSERT INTO user (username, email, password) VALUES (?, ?, ?)', [username, email, password], function (error, results, fields) {
+                if (error) {
+                    res.send({ success: false, message: error.sqlMessage });
+                } else {
+                    res.send({ success: true, message: "User registered successfully!" });
+                }
+            });
         }
     });
 });
+
 
 app.get('/isAuthenticated', verifyToken, (req, res) => {
     res.status(200).send({ isAuthenticated: true });
