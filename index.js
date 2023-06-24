@@ -391,6 +391,63 @@ app.post('/imageset', async (req, res, next) => {
     });
 });
 
+app.delete('/imageset/:id', (req, res) => {
+    const setId = req.params.id;
+
+    // Start transaction
+    connection.beginTransaction(function(err) {
+        if (err) { throw err; }
+
+        // Delete images where image_sets_id = setId
+        connection.query('DELETE FROM image WHERE image_sets_id = ?', [setId], function(err, result) {
+            if (err) { 
+                // If an error occurred, rollback the transaction
+                connection.rollback(function() {
+                    throw err;
+                });
+            }
+
+            // Delete image set where id = setId
+            connection.query('DELETE FROM image_sets WHERE id = ?', [setId], function(err, result) {
+                if (err) { 
+                    // If an error occurred, rollback the transaction
+                    connection.rollback(function() {
+                        throw err;
+                    });
+                }  
+                deleteDirectory(__dirname + '/resources/' + setId)
+                connection.commit(function(err) {
+                    if (err) { 
+                        connection.rollback(function() {
+                            throw err;
+                        });
+                    }
+                    res.send({success: true, message: "Image set and its images deleted successfully!"});
+                });
+            });
+        });
+    });
+});
+
+function deleteDirectory(dirPath) {
+    if (fs.existsSync(dirPath)) {
+        fs.readdirSync(dirPath).forEach((file) => {
+            const currentPath = path.join(dirPath, file);
+            if (fs.lstatSync(currentPath).isDirectory()) {
+                // Recurse if the current path is a directory
+                deleteDirectory(currentPath);
+            } else {
+                // Delete file
+                fs.unlinkSync(currentPath);
+            }
+        });
+        // Delete directory
+        fs.rmdirSync(dirPath);
+    } else {
+        console.log('Directory path ' + dirPath + ' not found.');
+    }
+}
+
 
 app.post('/theme', (req, res) => {
     const name = req.body.name;
@@ -411,4 +468,4 @@ app.post('/logout', (req, res) => {
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
-app.listen(3000, () => console.log('Server started'));
+app.listen(3000, () => console.log('Server started' + __dirname));
