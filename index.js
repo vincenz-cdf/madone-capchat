@@ -51,8 +51,7 @@ app.post('/login', async (req, res) => {
             const comparison = await bcrypt.compare(password, results[0].password)
             if (comparison) {
                 const token = jwt.sign({ id: results[0].id }, process.env.SECRET_KEY, { expiresIn: 3600 });
-                res.cookie('authToken', token, { httpOnly: true, sameSite: 'strict' });
-                res.status(200).send({ auth: true, success: true, redirect: '/' });
+                res.status(200).send({ auth: true, success: true, redirect: '/', token });
             } else {
                 res.send({ auth: false, message: 'Identifiant ou mdp invalide', success: false });
             }
@@ -62,34 +61,6 @@ app.post('/login', async (req, res) => {
     });
 });
 
-app.get('/currentUser', verifyToken, (req, res) => {
-    const userId = req.userId;
-    const sqlCheck = 'SELECT id, username, email FROM user WHERE id = ?';
-    connection.query(sqlCheck, [userId], function (err, results) {
-        if (err) throw err;
-        res.json(results[0]);
-    });
-});
-
-app.post('/users', (req, res) => {
-    const sqlCheck = 'SELECT id, username, email FROM user WHERE id != 1 AND id != ?';
-    connection.query(sqlCheck, [req.body.id], function (err, results) {
-        if (err) throw err;
-        res.json(results);
-    });
-});
-
-app.post('/users/:id', (req, res) => {
-    const id = req.params.id;
-    const username = req.body.username;
-    const email = req.body.email;
-
-    const sqlCheck = 'UPDATE user SET username = ?, email = ? where id = ?';
-    connection.query(sqlCheck, [username, email, id], function (err, results) {
-        if (err) throw err;
-        res.json(results);
-    });
-});
 
 
 app.post('/register', (req, res) => {
@@ -120,6 +91,35 @@ app.get('/isAuthenticated', verifyToken, (req, res) => {
     res.status(200).send({ isAuthenticated: true });
 });
 
+
+app.get('/currentUser', verifyToken, (req, res) => {
+    const userId = req.userId;
+    const sqlCheck = 'SELECT id, username, email FROM user WHERE id = ?';
+    connection.query(sqlCheck, [userId], function (err, results) {
+        if (err) throw err;
+        res.json(results[0]);
+    });
+});
+
+app.post('/users', (req, res) => {
+    const sqlCheck = 'SELECT id, username, email FROM user WHERE id != 1 AND id != ?';
+    connection.query(sqlCheck, [req.body.id], function (err, results) {
+        if (err) throw err;
+        res.json(results);
+    });
+});
+
+app.post('/users/:id', (req, res) => {
+    const id = req.params.id;
+    const username = req.body.username;
+    const email = req.body.email;
+
+    const sqlCheck = 'UPDATE user SET username = ?, email = ? where id = ?';
+    connection.query(sqlCheck, [username, email, id], function (err, results) {
+        if (err) throw err;
+        res.json(results);
+    });
+});
 
 app.get('/capchat/:id', (req, res) => {
     const id = req.params.id;
@@ -469,13 +469,6 @@ app.post('/theme', (req, res) => {
         }
     });
 });
-
-app.post('/logout', (req, res) => {
-    res.clearCookie('authToken', { path: '/', domain: 'http://localhost:3000' }); // replace 'your-domain.com' with your actual domain
-    res.status(200).send({ success: true, message: "Logged out" });
-});
-
-
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
