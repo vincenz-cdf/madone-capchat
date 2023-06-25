@@ -139,7 +139,7 @@ module.exports = function (app, connection) {
             if (error) {
                 res.send({ success: false, message: error.sqlMessage });
             } else {
-                res.send({ success: true, message: "Theme create!" });
+                res.send({ success: true, message: "Theme create!", themeId: results.insertId });
             }
         });
     });

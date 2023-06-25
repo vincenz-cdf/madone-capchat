@@ -66,7 +66,7 @@ module.exports = function(app, connection) {
                     const imageId = fields[fileKey.replace('file', 'imageId')];
     
                     // Use fields.theme_id as the folder name
-                    const folder = hint ? `./resources/${fields.image_sets_id}/singuliers` : `./resources/${fields.image_sets_id}/neutres`;
+                    const folder = hint ? `../resources/${fields.image_sets_id}/singuliers` : `../resources/${fields.image_sets_id}/neutres`;
     
                     const newPath = path.join(__dirname, folder, file.name);
     
@@ -114,7 +114,7 @@ module.exports = function(app, connection) {
                     const hint = fields[fileKey.replace('file', 'hint')];
     
                     // Use setId as the folder name
-                    const folder = hint ? `./resources/${setId}/singuliers` : `./resources/${setId}/neutres`;
+                    const folder = hint ? `../resources/${setId}/singuliers` : `../resources/${setId}/neutres`;
     
                     const newPath = path.join(__dirname, folder, file.name);
     
