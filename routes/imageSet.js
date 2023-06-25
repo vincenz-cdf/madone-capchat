@@ -167,7 +167,7 @@ module.exports = function(app, connection) {
                             throw err;
                         });
                     }  
-                    deleteDirectory(__dirname + '/resources/' + setId)
+                    deleteDirectory(path.join(__dirname, '../resources/', setId));
                     connection.commit(function(err) {
                         if (err) { 
                             connection.rollback(function() {
