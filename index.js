@@ -11,7 +11,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 var corsOptions = {
-    origin: 'https://capchat-128d3c8c71a2.herokuapp.com/', // or your angular app's origin
+    origin: 'https://capchat-128d3c8c71a2.herokuapp.com', // or your angular app's origin
     credentials: true
 }
 
