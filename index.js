@@ -50,4 +50,4 @@ imageSetRoutes(app, connection);
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
 
-app.listen(3000, () => console.log('Server started' + __dirname));
+app.listen(3000, "0.0.0.0", () => console.log('Server started' + __dirname));
